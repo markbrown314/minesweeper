@@ -40,14 +40,20 @@ the implementation that they more accurately follow are described.
 Implemented with tuple sets
 """
 from random import randint, seed
+import re
+
 MAX_X = 8
 MAX_Y = 8
-MAX_MINES = 10
+MAX_MINES = 1
 
-def adjecency_check(input_set, coord):
+def adjecency_check(input_set, coord, match = True):
     for x in range(coord[0]-1, coord[0]+2):
         for y in range(coord[1]-1, coord[1]+2):
-            if (x,y) != coord and (x,y) in input_set:
+            if (x,y) == coord:
+                continue
+            if match and (x,y) in input_set:
+                yield(x,y)
+            if not match and (x,y) in input_set:
                 yield(x,y)
 
 def adjecent_mines(board, coord):
@@ -79,11 +85,11 @@ def render_gameboard(board):
             if (x,y) in board["flags"]:
                 char = "?"
             elif (x,y) not in board["visible"]:
-                char = "-"
+                char = "#"
             else:
                 mine_count = adjecent_mines(board, (x,y))
                 if mine_count == 0:
-                    char = " "
+                    char = "."
                 else:
                     char = str(mine_count)
 
@@ -108,13 +114,25 @@ def parse_coord(input_str):
 def eventloop():
     board = init_gameboard()
     while True:
+        # check winning condition
+        if not board["visible"] ^ board["empty"] - board["mines"]:
+            print("You Win!!!")
+            board["reveal"] = True
+            render_gameboard(board)
+            return
+
         render_gameboard(board)
         print("enter in command:")
         command = input()
-        if command == "!":
-            print("enter in coordinates:")
+        if command == "":
+            continue
+
+        if command == "quit":
+            return
+
+        if command[0] == "!":
             try:
-                coord_str = input()
+                coord_str = re.split(' |,', command, 1)[1]
                 coord = parse_coord(coord_str)
                 if coord in board["mines"]:
                     print("Game Over!")
@@ -123,16 +141,15 @@ def eventloop():
                     return
                 uncover_tile(board, coord)
             except:
-                print("invalid coordinate")
+                print("invalid input")
 
-        if command == "?":
-            print("enter in coordinates:")
-            coord_str = input()
+        if command[0] == "?":
             try:
+                coord_str = re.split(' |,', command, 1)[1]
                 coord = parse_coord(coord_str)
                 board["flags"].add(coord)
             except:
-                print("invalid coordinate")
+                print("invalid input")
 
         if command == "%":
             board["reveal"] = not board["reveal"]
