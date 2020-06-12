@@ -45,6 +45,7 @@ import re
 MAX_X = 8
 MAX_Y = 8
 MAX_MINES = 1
+PERCENT_MINES = 25
 
 def adjecency_check(input_set, coord, match = True):
     for x in range(coord[0]-1, coord[0]+2):
@@ -161,6 +162,8 @@ def init_gameboard():
     board["mines"] = set()
     board["flags"] = set()
     board["visible"] = set()
+
+    assert MAX_MINES / (MAX_X * MAX_Y) < PERCENT_MINES / 100
 
     board["empty"] = set()
     for y in range(1, MAX_Y + 1):
