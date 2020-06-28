@@ -1,43 +1,11 @@
 """
 Minesweeper
 
-There is an n by m grid that has a random number (between 10% to 20% of the
-total number of tiles, though older implementations may use 20%..60% instead)
-of randomly placed mines that need to be found.
-
-Positions in the grid are modified by entering their coordinates where the
-first coordinate is horizontal in the grid and the second vertical. The top
-left of the grid is position 1,1; the bottom right is at n,m.
-
-The total number of mines to be found is shown at the beginning of the game.
-Each mine occupies a single grid point, and its position is initially unknown
-to the player.
-
-The grid is shown as a rectangle of characters between moves.
-You are initially shown all grids as obscured, by a single dot '.'
-You may mark what you think is the position of a mine which will show as a '?'
-You can mark what you think is free space by entering its coordinates.
-If the point is free space then it is cleared, as are any adjacent points that
-are also free space. This is repeated recursively for subsequent adjacent free
-points unless that point is marked as a mine or is a mine.
-
-Points marked as a mine show as a '?'.
-Other free points show as an integer count of the number of adjacent true mines
-in its immediate neighborhood, or as a single space ' ' if the free point is
-not adjacent to any true mines.
-
-Of course you lose if you try to clear space that has a hidden mine.
-You win when you have correctly identified all mines.
-The Task is to create a program that allows you to play minesweeper on a 6 by 4
-grid, and that assumes all user input is formatted correctly and so checking
-inputs for correct form may be omitted. You may also omit all GUI parts of the
-task and work using text input and output.
-
-Note: Changes may be made to the method of clearing mines to more closely
-follow a particular implementation of the game so long as such differences and
-the implementation that they more accurately follow are described.
+Implementation of the game Minesweeper as defined here: 
+https://rosettacode.org/wiki/Minesweeper_game
 
 Implemented with tuple sets
+TODO: probably better as object
 """
 from random import randint, seed
 import re
@@ -45,7 +13,8 @@ import re
 MAX_X = 8
 MAX_Y = 8
 MAX_MINES = 1
-PERCENT_MINES = 25
+PERCENT_MINES = .25
+RAND_SEED = 1
 
 def adjecency_check(input_set, coord, match = True):
     for x in range(coord[0]-1, coord[0]+2):
@@ -112,8 +81,73 @@ def parse_coord(input_str):
         coord.append(int(pos))
     return tuple(coord)
 
-def eventloop():
-    board = init_gameboard()
+def default_mine_placement(board):
+    # layout mines: random placement
+    seed(board["rand_seed"])
+
+    while True:
+        if len(board["mines"]) == board["max_mines"]:
+            break
+        mine_coord = (randint(1, board["max_x"]), randint(1, board["max_y"]))
+        if mine_coord in board["mines"]:
+            continue
+        board["mines"].add(mine_coord)
+    print(board["mines"])
+
+
+def init_gameboard(**kwargs):
+    board = {}
+
+    # defaults
+    board["rand_seed"] = RAND_SEED
+    board["max_x"] = MAX_X
+    board["max_y"] = MAX_Y
+    board["percent_mines"] = PERCENT_MINES
+    board["max_mines"] = MAX_MINES
+    board["layout_callback"] = default_mine_placement
+    
+    board["mines"] = set()
+    board["flags"] = set()
+    board["visible"] = set()
+
+    # process kwarg overrides
+    params = {"max_x", "max_y", "percent_mines", "max_mines", "layout_callback"}
+    for key in kwargs:
+        if key in params:
+            board[key] = kwargs[key]
+        else:
+            raise ValueError("invalid argument: " + key)
+
+     # check settings for too many mines
+    total_tiles = board["max_x"] * board["max_y"]
+    check_percent_mines = board["max_mines"] / total_tiles
+    assert check_percent_mines < board["percent_mines"]
+
+    board["empty"] = set()
+
+    for y in range(1, board["max_y"] + 1):
+        for x in range(1, board["max_x"] + 1):
+            if not (x,y) in board["mines"]:
+                board["empty"].add((x,y))
+
+    board["reveal"] = False
+
+    # layout mines
+    board["layout_callback"](board)
+
+    return board
+
+def eventloop(board, **kwargs):
+    input_callback = input
+    render_callback = render_gameboard
+    
+    for key in kwargs.items():
+        if key == "input_callback":
+            input_callback = kwargs[key]
+        elif key == "render_callback":
+            render_callback = kwargs[key]
+        else:
+            raise ValueError("invalid argument: " + key)
     while True:
         # check winning condition
         if not board["visible"] ^ board["empty"] - board["mines"]:
@@ -122,9 +156,8 @@ def eventloop():
             render_gameboard(board)
             return
 
-        render_gameboard(board)
-        print("enter in command:")
-        command = input()
+        render_callback(board)
+        command = input_callback(":")
         if command == "":
             continue
 
@@ -138,7 +171,7 @@ def eventloop():
                 if coord in board["mines"]:
                     print("Game Over!")
                     board["reveal"] = True
-                    render_gameboard(board)
+                    render_callback(board)
                     return
                 uncover_tile(board, coord)
             except:
@@ -155,35 +188,8 @@ def eventloop():
         if command == "%":
             board["reveal"] = not board["reveal"]
 
-def init_gameboard():
-    seed(1)
-    board = {}
-    board["dimensions"] = (MAX_X, MAX_Y)
-    board["mines"] = set()
-    board["flags"] = set()
-    board["visible"] = set()
-
-    assert MAX_MINES / (MAX_X * MAX_Y) < PERCENT_MINES / 100
-
-    board["empty"] = set()
-    for y in range(1, MAX_Y + 1):
-        for x in range(1, MAX_X + 1):
-            if not (x,y) in board["mines"]:
-                board["empty"].add((x,y))
-
-    board["reveal"] = False
-    
-    while True:
-        if len(board["mines"]) == MAX_MINES:
-            break
-        mine_coord = (randint(1, MAX_X), randint(1, MAX_Y))
-        if mine_coord in board["mines"]:
-            continue
-        board["mines"].add(mine_coord)
-    print(board["mines"])
-    return board
-
 def main():
-    eventloop()
+    eventloop(init_gameboard())
 
-main()
+if __name__ == "__main__":
+    main()
