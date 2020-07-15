@@ -47,11 +47,11 @@ def uncover_tile(board, coord):
 
 def render_gameboard(board):
     char = "^"
-    for x in range (0, MAX_X + 1):
+    for x in range(0, MAX_X + 1):
         print(LABEL[x], end='')
     for y in range(1, MAX_Y + 1):
         print()
-        print (LABEL[y], end='')
+        print(LABEL[y], end='')
         for x in range(1, MAX_X + 1):
             if (x, y) in board["flags"]:
                 char = "?"
