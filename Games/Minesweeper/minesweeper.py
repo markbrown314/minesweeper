@@ -1,36 +1,34 @@
 """
 Minesweeper
 
-Implementation of the game Minesweeper as defined here: 
+Implementation of the game Minesweeper as defined here:
 https://rosettacode.org/wiki/Minesweeper_game
 
-Implemented with tuple sets
-TODO: probably better as object
+by Mark Brown <mark.brown314@gmail.com>
 """
 from random import randint, seed
 import re
+import string
 
-MAX_X = 8
-MAX_Y = 8
-MAX_MINES = 1
+MAX_X = 10
+MAX_Y = 10
+MAX_MINES = 8
 PERCENT_MINES = .25
-RAND_SEED = 1
+RAND_SEED = None
+LABEL = " " + string.ascii_uppercase
 
-def adjecency_check(input_set, coord, match = True):
+def adjecency_check(input_set, coord, match=True):
     for x in range(coord[0]-1, coord[0]+2):
         for y in range(coord[1]-1, coord[1]+2):
-            if (x,y) == coord:
+            if (x, y) == coord:
                 continue
-            if match and (x,y) in input_set:
-                yield(x,y)
-            if not match and (x,y) in input_set:
-                yield(x,y)
+            if match and (x, y) in input_set:
+                yield(x, y)
+            if not match and (x, y) in input_set:
+                yield(x, y)
 
 def adjecent_mines(board, coord):
-    mine_count = 0
-    for coord in adjecency_check(board["mines"], coord):
-        mine_count += 1
-    return mine_count
+    return len([*adjecency_check(board["mines"], coord)])
 
 def uncover_tile(board, coord):
 
@@ -46,24 +44,27 @@ def uncover_tile(board, coord):
 
     for pos in adjecency_check(board["empty"], coord):
         uncover_tile(board, pos)
-        
+
 def render_gameboard(board):
     char = "^"
+    for x in range (0, MAX_X + 1):
+        print(LABEL[x], end='')
     for y in range(1, MAX_Y + 1):
         print()
+        print (LABEL[y], end='')
         for x in range(1, MAX_X + 1):
-            if (x,y) in board["flags"]:
+            if (x, y) in board["flags"]:
                 char = "?"
-            elif (x,y) not in board["visible"]:
+            elif (x, y) not in board["visible"]:
                 char = "#"
             else:
-                mine_count = adjecent_mines(board, (x,y))
+                mine_count = adjecent_mines(board, (x, y))
                 if mine_count == 0:
                     char = "."
                 else:
                     char = str(mine_count)
 
-            if board["reveal"] and (x,y) in board["mines"]:
+            if board["reveal"] and (x, y) in board["mines"]:
                 char = "*"
 
             print(char, end="")
@@ -78,7 +79,13 @@ def parse_coord(input_str):
         raise ValueError("invalid coordinates")
     coord = []
     for pos in coord_temp:
-        coord.append(int(pos))
+        # convert alphabetic coordinate to numerical coordinate
+        # assuming ascii input
+        if pos.isalpha():
+            coord.append(ord(pos.upper()) - ord('A') + 1)
+        else:
+            coord.append(int(pos))
+
     return tuple(coord)
 
 def default_mine_placement(board):
@@ -92,8 +99,6 @@ def default_mine_placement(board):
         if mine_coord in board["mines"]:
             continue
         board["mines"].add(mine_coord)
-    print(board["mines"])
-
 
 def init_gameboard(**kwargs):
     board = {}
@@ -105,7 +110,7 @@ def init_gameboard(**kwargs):
     board["percent_mines"] = PERCENT_MINES
     board["max_mines"] = MAX_MINES
     board["layout_callback"] = default_mine_placement
-    
+
     board["mines"] = set()
     board["flags"] = set()
     board["visible"] = set()
@@ -127,8 +132,8 @@ def init_gameboard(**kwargs):
 
     for y in range(1, board["max_y"] + 1):
         for x in range(1, board["max_x"] + 1):
-            if not (x,y) in board["mines"]:
-                board["empty"].add((x,y))
+            if not (x, y) in board["mines"]:
+                board["empty"].add((x, y))
 
     board["reveal"] = False
 
@@ -137,31 +142,24 @@ def init_gameboard(**kwargs):
 
     return board
 
-def eventloop(board, **kwargs):
+def eventloop(board):
     input_callback = input
     render_callback = render_gameboard
-    
-    for key in kwargs.items():
-        if key == "input_callback":
-            input_callback = kwargs[key]
-        elif key == "render_callback":
-            render_callback = kwargs[key]
-        else:
-            raise ValueError("invalid argument: " + key)
+
     while True:
         # check winning condition
         if not board["visible"] ^ board["empty"] - board["mines"]:
             print("You Win!!!")
             board["reveal"] = True
-            render_gameboard(board)
+            render_callback(board)
             return
 
         render_callback(board)
-        command = input_callback(":")
+        command = input_callback("command (h for help):")
         if command == "":
             continue
 
-        if command == "quit":
+        if command in ("q", "quit"):
             return
 
         if command[0] == "!":
@@ -180,13 +178,20 @@ def eventloop(board, **kwargs):
         if command[0] == "?":
             try:
                 coord_str = re.split(' |,', command, 1)[1]
-                coord = parse_coord(coord_str)
-                board["flags"].add(coord)
+                coord = {parse_coord(coord_str)}
+                board["flags"] ^= coord
             except:
                 print("invalid input")
 
-        if command == "%":
+        if command in ("%", "reveal"):
+            print(board["mines"])
             board["reveal"] = not board["reveal"]
+
+        if command == "h":
+            print("Minesweeper help:")
+            print("? (x,y) place flag at specified coordinate")
+            print("! (x,y) reveal flag at specified coordinate")
+            print("q quit")
 
 def main():
     eventloop(init_gameboard())
