@@ -12,9 +12,9 @@ import string
 
 MAX_X = 10
 MAX_Y = 10
-MAX_MINES = 8
+MAX_MINES = 10
 PERCENT_MINES = .25
-RAND_SEED = None
+RAND_SEED = 1
 LABEL = " " + string.ascii_uppercase
 
 def adjecency_check(input_set, coord, match=True):
@@ -24,7 +24,7 @@ def adjecency_check(input_set, coord, match=True):
                 continue
             if match and (x, y) in input_set:
                 yield(x, y)
-            if not match and (x, y) in input_set:
+            if not match and (x, y) not in input_set:
                 yield(x, y)
 
 def adjecent_mines(board, coord):
@@ -34,6 +34,10 @@ def uncover_tile(board, coord):
 
     if coord in board["visible"]:
         return
+
+    # first move init board
+    if not board["visible"]:
+        board["layout_callback"](board, coord)      
 
     if adjecent_mines(board, coord) > 0:
         board["visible"].add(coord)
@@ -88,17 +92,26 @@ def parse_coord(input_str):
 
     return tuple(coord)
 
-def default_mine_placement(board):
+def default_mine_placement(board, initial_coord=None):
     # layout mines: random placement
     seed(board["rand_seed"])
+    exclude_map = set(board["mines"])
+    exclude_map.update([*adjecency_check(set(), initial_coord, False)])
+    exclude_map.update([initial_coord])
 
     while True:
-        if len(board["mines"]) == board["max_mines"]:
+        if len(board["mines"]) >= board["max_mines"]:
             break
         mine_coord = (randint(1, board["max_x"]), randint(1, board["max_y"]))
-        if mine_coord in board["mines"]:
+        if mine_coord in exclude_map:
             continue
         board["mines"].add(mine_coord)
+        exclude_map.add(mine_coord)
+
+    for y in range(1, board["max_y"] + 1):
+        for x in range(1, board["max_x"] + 1):
+            if not (x, y) in board["mines"]:
+                board["empty"].add((x, y))
 
 def init_gameboard(**kwargs):
     board = {}
@@ -126,19 +139,11 @@ def init_gameboard(**kwargs):
      # check settings for too many mines
     total_tiles = board["max_x"] * board["max_y"]
     check_percent_mines = board["max_mines"] / total_tiles
-    assert check_percent_mines < board["percent_mines"]
+    assert check_percent_mines <= board["percent_mines"]
 
     board["empty"] = set()
 
-    for y in range(1, board["max_y"] + 1):
-        for x in range(1, board["max_x"] + 1):
-            if not (x, y) in board["mines"]:
-                board["empty"].add((x, y))
-
     board["reveal"] = False
-
-    # layout mines
-    board["layout_callback"](board)
 
     return board
 
@@ -148,11 +153,13 @@ def eventloop(board):
 
     while True:
         # check winning condition
+        """
         if not board["visible"] ^ board["empty"] - board["mines"]:
             print("You Win!!!")
             board["reveal"] = True
             render_callback(board)
             return
+        """
 
         render_callback(board)
         command = input_callback("command (h for help):")
@@ -166,14 +173,15 @@ def eventloop(board):
             try:
                 coord_str = re.split(' |,', command, 1)[1]
                 coord = parse_coord(coord_str)
-                if coord in board["mines"]:
-                    print("Game Over!")
-                    board["reveal"] = True
-                    render_callback(board)
-                    return
-                uncover_tile(board, coord)
             except:
                 print("invalid input")
+
+            if coord in board["mines"]:
+                print("Game Over!")
+                board["reveal"] = True
+                render_callback(board)
+                return
+            uncover_tile(board, coord)
 
         if command[0] == "?":
             try:
