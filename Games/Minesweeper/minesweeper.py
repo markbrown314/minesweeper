@@ -12,7 +12,7 @@ import string
 
 MAX_X = 10
 MAX_Y = 10
-MAX_MINES = 10
+MAX_MINES = 25
 PERCENT_MINES = .25
 RAND_SEED = 1
 LABEL = " " + string.ascii_uppercase
@@ -153,14 +153,12 @@ def eventloop(board):
 
     while True:
         # check winning condition
-        """
-        if not board["visible"] ^ board["empty"] - board["mines"]:
+        if board["mines"] and not board["visible"] ^ board["empty"] - board["mines"]:
             print("You Win!!!")
             board["reveal"] = True
             render_callback(board)
             return
-        """
-
+                
         render_callback(board)
         command = input_callback("command (h for help):")
         if command == "":
