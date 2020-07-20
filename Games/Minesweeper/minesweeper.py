@@ -95,16 +95,21 @@ class GameContext(object):
                     else:
                         char = str(mine_count)
 
-                if self.reveal and (x, y) in self.mines:
-                    char = "*"
+                if self.reveal:
+                    if (x, y) in self.mines:
+                        char = "*"
+                    elif (x, y) in self.flags and (x, y) not in self.mines:
+                        char = "X"
 
                 print(char, end="")
         print()
 
     def winning_condition(self):
         return self.mines and not self.visible ^ self.empty - self.mines
-                
-
+    
+    def hit_mine(self, coord):
+        return coord in self.mines
+                 
     def default_mine_placement(self, initial_coord=None):
         # layout mines: random placement
         seed(self.rand_seed)
@@ -147,11 +152,13 @@ if __name__ == "__main__":
 
     def eventloop():
         game_context = GameContext()
-        undo_list = [copy.deepcopy(game_context)]
+        undo_list = []
         input_callback = input
         game_over = False
 
         while True:
+            save_context = copy.deepcopy(game_context)
+
             # check winning condition
             if game_context.winning_condition():
                 print("You Win!!!")
@@ -175,10 +182,10 @@ if __name__ == "__main__":
                 except:
                     print("invalid input")
 
-                undo_list.append(copy.deepcopy(game_context))
+                undo_list.append(save_context)
                 game_context.uncover_tile(coord)
 
-                if coord in game_context.mines:
+                if game_context.hit_mine(coord):
                     print("Game Over!")
                     game_context.reveal = True
                     game_over = True
@@ -188,28 +195,31 @@ if __name__ == "__main__":
                 try:
                     coord_str = re.split(' |,', command, 1)[1]
                     coord = {parse_coord(coord_str)}
-                    undo_list.append(copy.deepcopy(game_context))
+                    undo_list.append(save_context)
                     game_context.set_flag(coord)
                 except:
                     print("invalid input")
 
             if command in ("%", "reveal"):
                 print(game_context.mines)
-                undo_list.append(copy.deepcopy(game_context))
+                undo_list.append(save_context)
                 game_context.reveal = not game_context.reveal
 
-            if command == "h":
+            if command in ("h", "help"):
                 print("Minesweeper help:")
                 print("? (x,y) place flag at specified coordinate")
                 print("! (x,y) reveal flag at specified coordinate")
                 print("q quit")
+                print("u undo")
+                print("r restart")
+                print("h help")
             
-            if command == "restart":
+            if command in ("r", "restart"):
                 print("Restarting")
+                undo_list = []
                 game_context = GameContext()
-                undo_list = [copy.deepcopy(game_context)]
 
-            if command == "undo":
+            if command in ("u", "undo"):
                 if undo_list:
                     game_over = False
                     game_context = undo_list.pop()
