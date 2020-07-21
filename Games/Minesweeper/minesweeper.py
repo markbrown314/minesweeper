@@ -8,29 +8,36 @@ by Mark Brown <mark.brown314@gmail.com>
 """
 from random import randint, seed
 import re
-import string
-import copy
+from string import ascii_uppercase
+from copy import deepcopy
+from math import floor
 
-MAX_X = 10
+MAX_X = 26
 MAX_Y = 10
 MAX_MINES = 10
 PERCENT_MINES = .25
 RAND_SEED = 1
-LABEL = " " + string.ascii_uppercase
+TILE_EMPTY = "."
+TILE_MINE = "*"
+TILE_FLAG = "?"
+TILE_WRONG = "X"
+TILE_HIDDEN = "#"
+
 
 class GameContext(object):
-    def __init__(self):
+    def __init__(self, **kwargs):
         # defaults
-        self.rand_seed = RAND_SEED
-        self.max_x = MAX_X
-        self.max_y = MAX_Y
-        self.percent_mines = PERCENT_MINES
-        self.max_mines = MAX_MINES
-        self.layout_callback = self.default_mine_placement
+        self.rand_seed = kwargs.get("rand_seed", RAND_SEED)
+        self.max_x = kwargs.get("max_x", MAX_X)
+        self.max_y = kwargs.get("max_y", MAX_Y)
+        self.percent_mines = kwargs.get("percent_mines", PERCENT_MINES)
+        self.max_mines = kwargs.get("max_mines", MAX_MINES)
+        self.layout_callback = kwargs.get("layout_callback", self.default_mine_placement)
 
         self.mines = set()
         self.flags = set()
         self.visible = set()
+        self.game_map = {}
 
         # check settings for too many mines
         total_tiles = self.max_x * self.max_y
@@ -77,32 +84,28 @@ class GameContext(object):
             self.uncover_tile(pos)
 
     def render_gameboard(self):
-        char = "^"
-        for x in range(0, MAX_X + 1):
-            print(LABEL[x], end='')
-        for y in range(1, MAX_Y + 1):
-            print()
-            print(LABEL[y], end='')
-            for x in range(1, MAX_X + 1):
+        tile = None
+        for y in range(1, self.max_y + 1):
+            for x in range(1, self.max_x + 1):
                 if (x, y) in self.flags:
-                    char = "?"
+                    tile = TILE_FLAG
                 elif (x, y) not in self.visible:
-                    char = "#"
+                    tile = TILE_HIDDEN
                 else:
                     mine_count = self.adjecent_mines((x, y))
                     if mine_count == 0:
-                        char = "."
+                        tile = TILE_EMPTY
                     else:
-                        char = str(mine_count)
+                        tile = str(mine_count)
 
                 if self.reveal:
                     if (x, y) in self.mines:
-                        char = "*"
+                        tile = TILE_MINE
                     elif (x, y) in self.flags and (x, y) not in self.mines:
-                        char = "X"
+                        tile = TILE_WRONG
 
-                print(char, end="")
-        print()
+                assert tile
+                self.game_map[(x,y)] = tile
 
     def winning_condition(self):
         return self.mines and not self.visible ^ self.empty - self.mines
@@ -132,6 +135,9 @@ class GameContext(object):
                     self.empty.add((x, y))
 
 if __name__ == "__main__":
+
+    LABEL = " " + ascii_uppercase
+
     def parse_coord(input_str):
         coord_temp = input_str
         coord_temp = coord_temp.replace("(", "")
@@ -150,25 +156,29 @@ if __name__ == "__main__":
 
         return tuple(coord)
 
+    def print_game_context(game_context):
+        game_context.render_gameboard()
+        for x in range(0, game_context.max_x + 1):
+            print(LABEL[x], end='')
+        for y in range(1, game_context.max_y + 1):
+            print()
+            print(LABEL[y], end='')
+            for x in range(1, game_context.max_x + 1):
+                print(game_context.game_map[(x,y)], end="")
+        print()
+
     def eventloop():
         game_context = GameContext()
         undo_list = []
-        input_callback = input
         game_over = False
 
         while True:
-            save_context = copy.deepcopy(game_context)
+            save_context = deepcopy(game_context)
 
-            # check winning condition
-            if game_context.winning_condition():
-                print("You Win!!!")
-                game_context.reveal = True
-                game_context.render_gameboard()
-                game_over = True
-                return
-                    
-            game_context.render_gameboard()
-            command = input_callback("command (h for help):")
+            if not game_over:
+                print_game_context(game_context)
+
+            command = input("command (h for help):")
             if command == "":
                 continue
 
@@ -181,6 +191,7 @@ if __name__ == "__main__":
                     coord = parse_coord(coord_str)
                 except:
                     print("invalid input")
+                    continue
 
                 undo_list.append(save_context)
                 game_context.uncover_tile(coord)
@@ -189,8 +200,17 @@ if __name__ == "__main__":
                     print("Game Over!")
                     game_context.reveal = True
                     game_over = True
+                    game_context.render_gameboard()
                     continue
-    
+
+                # check winning condition
+                if game_context.winning_condition():
+                    game_context.reveal = True
+                    game_context.render_gameboard()
+                    game_over = True
+                    print("You Win!!!")
+                    continue
+
             if command[0] == "?" and not game_over:
                 try:
                     coord_str = re.split(' |,', command, 1)[1]
