@@ -14,9 +14,9 @@ from math import floor
 
 MAX_X = 26
 MAX_Y = 10
-MAX_MINES = 10
-PERCENT_MINES = .25
-RAND_SEED = 1
+MAX_MINES = None
+PERCENT_MINES = .10
+RAND_SEED = None
 TILE_EMPTY = "."
 TILE_MINE = "*"
 TILE_FLAG = "?"
@@ -24,7 +24,8 @@ TILE_WRONG = "X"
 TILE_HIDDEN = "#"
 
 
-class GameContext(object):
+class GameContext():
+    """ manages game context """
     def __init__(self, **kwargs):
         # defaults
         self.rand_seed = kwargs.get("rand_seed", RAND_SEED)
@@ -41,13 +42,21 @@ class GameContext(object):
 
         # check settings for too many mines
         total_tiles = self.max_x * self.max_y
-        check_percent_mines = self.max_mines / total_tiles
-        assert check_percent_mines <= self.percent_mines
+
+        # check mine constraints
+        if self.max_mines and self.percent_mines:
+            check_percent_mines = self.max_mines / total_tiles
+            assert check_percent_mines <= self.percent_mines
+        else:
+            assert self.percent_mines
+            self.max_mines = floor(total_tiles * self.percent_mines)
 
         self.empty = set()
         self.reveal = False
 
-    def adjecency_check(self, input_set, coord, match=True):
+    @staticmethod
+    def adjecency_check(input_set, coord, match=True):
+        """ check if coordinate is adjecent to item in input set """
         for x in range(coord[0]-1, coord[0]+2):
             for y in range(coord[1]-1, coord[1]+2):
                 if (x, y) == coord:
@@ -58,20 +67,22 @@ class GameContext(object):
                     yield(x, y)
 
     def adjecent_mines(self, coord):
+        """ check if coordinate is adjecent to mine tile """
         return len([*self.adjecency_check(self.mines, coord)])
 
     def set_flag(self, coord):
+        """ set flag at coordinate """
         self.flags ^= coord
 
 
     def uncover_tile(self, coord):
-
+        """ reveal tile at coordinate """
         if coord in self.visible:
             return
 
         # first move init board
         if not self.visible:
-            self.layout_callback(coord)      
+            self.layout_callback(coord)
 
         if self.adjecent_mines(coord) > 0:
             self.visible.add(coord)
@@ -84,6 +95,7 @@ class GameContext(object):
             self.uncover_tile(pos)
 
     def render_gameboard(self):
+        """ construct game map from current game context """
         tile = None
         for y in range(1, self.max_y + 1):
             for x in range(1, self.max_x + 1):
@@ -105,16 +117,18 @@ class GameContext(object):
                         tile = TILE_WRONG
 
                 assert tile
-                self.game_map[(x,y)] = tile
+                self.game_map[(x, y)] = tile
 
     def winning_condition(self):
+        """ check for winning condition """
         return self.mines and not self.visible ^ self.empty - self.mines
-    
+
     def hit_mine(self, coord):
+        """ check if coordinate has mine """
         return coord in self.mines
-                 
+
     def default_mine_placement(self, initial_coord=None):
-        # layout mines: random placement
+        """ play mines with random location """
         seed(self.rand_seed)
         exclude_map = set(self.mines)
         exclude_map.update([*self.adjecency_check(set(), initial_coord, False)])
@@ -139,6 +153,7 @@ if __name__ == "__main__":
     LABEL = " " + ascii_uppercase
 
     def parse_coord(input_str):
+        """ parse coordinate string input """
         coord_temp = input_str
         coord_temp = coord_temp.replace("(", "")
         coord_temp = coord_temp.replace(")", "")
@@ -157,6 +172,7 @@ if __name__ == "__main__":
         return tuple(coord)
 
     def print_game_context(game_context):
+        """ print game state to terminal """
         game_context.render_gameboard()
         for x in range(0, game_context.max_x + 1):
             print(LABEL[x], end='')
@@ -164,10 +180,11 @@ if __name__ == "__main__":
             print()
             print(LABEL[y], end='')
             for x in range(1, game_context.max_x + 1):
-                print(game_context.game_map[(x,y)], end="")
+                print(game_context.game_map[(x, y)], end="")
         print()
 
     def eventloop():
+        """ event loop """
         game_context = GameContext()
         undo_list = []
         game_over = False
@@ -189,7 +206,7 @@ if __name__ == "__main__":
                 try:
                     coord_str = re.split(' |,', command, 1)[1]
                     coord = parse_coord(coord_str)
-                except:
+                except ValueError:
                     print("invalid input")
                     continue
 
@@ -217,7 +234,7 @@ if __name__ == "__main__":
                     coord = {parse_coord(coord_str)}
                     undo_list.append(save_context)
                     game_context.set_flag(coord)
-                except:
+                except ValueError:
                     print("invalid input")
 
             if command in ("%", "reveal"):
@@ -233,7 +250,7 @@ if __name__ == "__main__":
                 print("u undo")
                 print("r restart")
                 print("h help")
-            
+
             if command in ("r", "restart"):
                 print("Restarting")
                 undo_list = []
@@ -247,6 +264,7 @@ if __name__ == "__main__":
                     print("Cannot undo")
 
     def main():
+        """ executes if module is not imported """
         eventloop()
 
     main()
