@@ -1,60 +1,17 @@
 <!DOCTYPE html>
 <html>
-<body>
-  <canvas id="minesweeper_canvas" width="1000" height="1000">
-  </canvas>
-
-  <script>
-  const MAX_X = 8
-  const MAX_Y = 8
-  const SQUARE_SIZE = 25
-  
-  document.addEventListener('contextmenu', e => e.preventDefault())
-  var canvas = document.getElementById('minesweeper_canvas')
-
-  function get_context(canvas) {
-    var ctx = null
-    if (canvas.getContext) {
-      ctx = canvas.getContext('2d')
-    }
-
-    return ctx
-  }
-
-  function draw(ctx) {
-    var gray = true
-    for (y = 0; y < MAX_X * SQUARE_SIZE; y += SQUARE_SIZE) {
-      gray = !gray
-      for (x = 0; x < MAX_X * SQUARE_SIZE; x += SQUARE_SIZE) {
-        ctx.strokeStyle = 'gainsboro'
-        if (gray) {
-            ctx.fillStyle = 'white'
-        } else {
-            ctx.fillStyle = 'lightgray'
-        }
-        gray = !gray
-        ctx.fillRect(x, y, SQUARE_SIZE, SQUARE_SIZE)
-        ctx.strokeRect(x, y, SQUARE_SIZE, SQUARE_SIZE)
-      }
-    }
-  }
-
-  function color(ctx, x, y) {
-    if (x >= 0 && x < MAX_X * SQUARE_SIZE && y >= 0 && y < MAX_X * SQUARE_SIZE) {
-      ctx.fillStyle = 'black'
-      ctx.fillRect(x, y, SQUARE_SIZE, SQUARE_SIZE)
-    }
-  }
- 
-  console.log("Minesweeper")
-  const ctx = get_context(canvas)
-
-  canvas.addEventListener('mousedown', e=> {
-     console.log("mouse down: X: " + e.offsetX + " Y: " + e.offsetY + " button: " + e.button)
-  })
-
-  draw(ctx)
-
-  </script>
-</body>
+  <head>
+    <link rel="stylesheet" href="minesweeper.css">
+  </head>
+  <body>
+    <table>
+      <tr>
+      <td><button type="button" name="reset">Reset</button></td>
+      </tr>
+      <tr>
+      <td><canvas id="minesweeper_canvas"> </canvas></td>
+      </tr>
+    </table>
+    <script src="minesweeper.js"></script> 
+  </body>
 </html>
