@@ -2,8 +2,9 @@ const MAX_X = 10
 const MAX_Y = 10
 const SQUARE_SIZE = 25
 
-const ASSET_PATH = "assests/"
+const ASSET_PATH = "assets/"
 const IMG_UNKNOWN_TILE = ASSET_PATH + "unknown_tile.png"
+const IMG_EMPTY_TILE = ASSET_PATH + "empty_tile.png"
 
 document.addEventListener('contextmenu', e => e.preventDefault())
 var canvas = document.getElementById('minesweeper_canvas')
@@ -38,7 +39,7 @@ console.log("Minesweeper")
 
 canvas.addEventListener('mousedown', e=> {
     console.log("mouse down: X: " + e.offsetX + " Y: " + e.offsetY + " button: " + e.button)
-    render_image("assests/empty_tile.png", snap_to_grid(e.offsetX), snap_to_grid(e.offsetY))  
+    render_image(IMG_EMPTY_TILE, snap_to_grid(e.offsetX), snap_to_grid(e.offsetY))  
   })
 
 draw(ctx)
