@@ -12,6 +12,7 @@ const IMG_SIX_TILE = ASSET_PATH + "six_tile.png"
 const IMG_SEVEN_TILE = ASSET_PATH + "seven_tile.png"
 const IMG_EIGHT_TILE = ASSET_PATH + "eight_tile.png"
 const IMG_MINE_HIT_TILE = ASSET_PATH + "mine_red_tile.png"
+const IMG_MINE_TILE = ASSET_PATH + "mine_tile.png"
 const IMG_FLAG_TILE = ASSET_PATH + "flag_tile.png"
 
 
@@ -32,11 +33,11 @@ function snap_to_grid(coord) {
 
 function render_game_map(ctx, game_context) {
   var img = IMG_UNKNOWN_TILE
+  var winning_condition = game_context["winning_condition"]
   for (y = 0; y < game_context.max_y; y += 1) {
     for (x = 0; x < game_context.max_x; x += 1) {
       var tile_id = ((x + 1) * game_context.max_x) + y + 1
       var gc = game_context.game_map[tile_id.toString()]
-      //console.log("x = " + x + " y = " + y + " gc = " + gc + " tid = ", tile_id)
 
       switch(game_context.game_map[tile_id.toString()]) {
         case "#":
@@ -70,21 +71,28 @@ function render_game_map(ctx, game_context) {
           img = IMG_EIGHT_TILE
           break
         case "*":
-          img = IMG_MINE_HIT_TILE
+          if (winning_condition) {
+            img = IMG_MINE_TILE
+          } else {
+            img = IMG_MINE_HIT_TILE
+          }
           break
         case "?":
           img = IMG_FLAG_TILE
           break
         }
-      render_image(img, x * SQUARE_SIZE, y * SQUARE_SIZE)
+      render_image(img, x * SQUARE_SIZE, y * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
     }  
   }
+  if (winning_condition) {
+    render_image("assets/winning_image.png", 50, 50, 150, 131)
+  }
 }
-function render_image(image_src, x, y) {
+function render_image(image_src, x, y, size_x, size_y) {
   var img = new Image
   img.src = image_src
   img.onload = function() {
-    ctx.drawImage(img, x, y, SQUARE_SIZE, SQUARE_SIZE)
+    ctx.drawImage(img, x, y, size_x, size_y)
   }
 }
 
@@ -102,10 +110,8 @@ undo_button.onclick = function() {
 
 
 canvas.addEventListener('mousedown', e=> {
-    //console.log("mouse down: X: " + e.offsetX + " Y: " + e.offsetY + " button: " + e.button)
     var x = tile_index(e.offsetX) + 1
     var y = tile_index(e.offsetY) + 1
-    console.log("button " + e.button)
     if (e.button == 0) {
       socket.send("! (" + x + "," + y +")")
     }

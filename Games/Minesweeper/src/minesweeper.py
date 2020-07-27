@@ -15,7 +15,7 @@ from math import floor
 MAX_X = 10
 MAX_Y = 10
 MAX_MINES = None
-PERCENT_MINES = .10
+PERCENT_MINES = .1
 RAND_SEED = 1
 TILE_EMPTY = "."
 TILE_MINE = "*"
@@ -121,11 +121,11 @@ class GameContext():
 
     def winning_condition(self):
         """ check for winning condition """
-        return self.mines and not self.visible ^ self.empty - self.mines
+        return bool(self.mines and not self.visible ^ self.empty - self.mines)
 
     def hit_mine(self, coord):
         """ check if coordinate has mine """
-        return coord in self.mines
+        return bool(coord in self.mines)
 
     def default_mine_placement(self, initial_coord=None):
         """ play mines with random location """

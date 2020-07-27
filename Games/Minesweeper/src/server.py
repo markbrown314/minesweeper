@@ -47,10 +47,11 @@ def jsonify_game_context(game_context):
     # cannot use map tuple keys in JSON
     # convert tuple key to integer based key
     for (x,y) in game_context.game_map:
-        # print("x =", x, "y =", y, "tile_index = ", game_context.max_x * x + y, "tile = ", game_context.game_map[(x,y)])
         game_map_int[game_context.max_x * x + y] = game_context.game_map[(x,y)] 
 
     gc_dict["game_map"] = game_map_int
+    gc_dict["winning_condition"] = game_context.winning_condition()
+
     return json.dumps(gc_dict)
 
 async def event_loop(websocket, path):
@@ -66,7 +67,6 @@ async def event_loop(websocket, path):
             print_game_context(game_context)
 
         game_context_json = jsonify_game_context(game_context)
-        # print(game_context_json)
 
         print ("Send...")
         await websocket.send(game_context_json)
