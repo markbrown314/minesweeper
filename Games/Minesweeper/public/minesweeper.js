@@ -38,8 +38,8 @@ function render_game_map(ctx, game_context) {
     for (x = 0; x < game_context.max_x; x += 1) {
       var tile_id = ((x + 1) * game_context.max_x) + y + 1
       var gc = game_context.game_map[tile_id.toString()]
-
-      switch(game_context.game_map[tile_id.toString()]) {
+      
+      switch(gc) {
         case "#":
           img = IMG_UNKNOWN_TILE
           break
@@ -124,6 +124,8 @@ const socket = new WebSocket('ws://localhost:8081 ')
 socket.addEventListener('message', function (event) {
     game_context = JSON.parse(event.data)
     render_game_map(ctx, game_context)
-    canvas.width = game_context.max_x * SQUARE_SIZE
-    canvas.height = game_context.max_y * SQUARE_SIZE   
+    if (canvas.width != game_context.max_x * SQUARE_SIZE || canvas.height != game_context.max_y * SQUARE_SIZE) {
+      canvas.width = game_context.max_x * SQUARE_SIZE
+      canvas.height = game_context.max_y * SQUARE_SIZE
+    }
   })
