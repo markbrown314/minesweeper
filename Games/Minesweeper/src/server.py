@@ -39,6 +39,20 @@ def print_game_context(game_context):
             print(game_context.game_map[(x, y)], end="")
     print()
 
+def jsonify_game_context(game_context):
+    gc_dict = {}
+    game_map_int = {}
+    gc_dict["max_x"] = game_context.max_x
+    gc_dict["max_y"] = game_context.max_y
+    # cannot use map tuple keys in JSON
+    # convert tuple key to integer based key
+    for (x,y) in game_context.game_map:
+        # print("x =", x, "y =", y, "tile_index = ", game_context.max_x * x + y, "tile = ", game_context.game_map[(x,y)])
+        game_map_int[game_context.max_x * x + y] = game_context.game_map[(x,y)] 
+
+    gc_dict["game_map"] = game_map_int
+    return json.dumps(gc_dict)
+
 async def event_loop(websocket, path):
     """ event loop """
     game_context = GameContext()
@@ -51,7 +65,18 @@ async def event_loop(websocket, path):
         if not game_over:
             print_game_context(game_context)
 
-        command = input("command (h for help):")
+        game_context_json = jsonify_game_context(game_context)
+        # print(game_context_json)
+
+        print ("Send...")
+        await websocket.send(game_context_json)
+        print ("Wait...")
+        recv = await websocket.recv()
+        print ("Recv...", recv)
+        await asyncio.sleep(.25)
+
+        command = recv
+
         if command == "":
             continue
 
@@ -93,41 +118,31 @@ async def event_loop(websocket, path):
             except ValueError:
                 print("invalid input")
 
-        if command in ("%", "reveal"):
+        if command[0] == "%":
             print(game_context.mines)
             undo_list.append(save_context)
             game_context.reveal = not game_context.reveal
 
-        if command in ("h", "help"):
-            print("Minesweeper help:")
-            print("? (x,y) place flag at specified coordinate")
-            print("! (x,y) reveal flag at specified coordinate")
-            print("q quit")
-            print("u undo")
-            print("r restart")
-            print("h help")
-
-        if command in ("r", "restart"):
-            print("Restarting")
+        if command[0] == "s":
+            print("Restarting Game")
             undo_list = []
             game_context = GameContext()
+            try:
+                coord_str = re.split(' |,', command, 1)[1]
+                coord = parse_coord(coord_str)
+            except ValueError:
+                print("invalid input")
+                continue
+            game_context.max_x = coord[0]
+            game_context.max_y = coord[1]
+            game_over = False
 
-        if command in ("u", "undo"):
+        if command in ("u"):
             if undo_list:
                 game_over = False
                 game_context = undo_list.pop()
             else:
                 print("Cannot undo")
-
-"""
-        while True:
-            json = generate_json(board)
-            await websocket.send(json)
-            print ("Recv...")
-            recv = await websocket.recv()
-            print ("Recv", recv)
-            await asyncio.sleep(.25)
-"""
 
 # main
 if __name__ == '__main__':

@@ -12,11 +12,11 @@ from string import ascii_uppercase
 from copy import deepcopy
 from math import floor
 
-MAX_X = 26
+MAX_X = 10
 MAX_Y = 10
 MAX_MINES = None
 PERCENT_MINES = .10
-RAND_SEED = None
+RAND_SEED = 1
 TILE_EMPTY = "."
 TILE_MINE = "*"
 TILE_FLAG = "?"
