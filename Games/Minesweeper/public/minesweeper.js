@@ -133,7 +133,8 @@ const socket = new WebSocket('ws://localhost:8081 ')
 socket.addEventListener('message', function (event) {
     game_context = JSON.parse(event.data)
     render_game_map(ctx, game_context)
-    if (canvas.width != game_context.max_x * SQUARE_SIZE || canvas.height != game_context.max_y * SQUARE_SIZE) {
+    if (canvas.width != game_context.max_x * SQUARE_SIZE ||
+       canvas.height != game_context.max_y * SQUARE_SIZE) {
       canvas.width = game_context.max_x * SQUARE_SIZE
       canvas.height = game_context.max_y * SQUARE_SIZE
     }

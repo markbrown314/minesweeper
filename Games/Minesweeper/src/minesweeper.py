@@ -15,8 +15,8 @@ from math import floor
 MAX_X = 10
 MAX_Y = 10
 MAX_MINES = None
-PERCENT_MINES = .1
-RAND_SEED = 1
+PERCENT_MINES = .10
+RAND_SEED = None
 TILE_EMPTY = "."
 TILE_MINE = "*"
 TILE_FLAG = "?"
