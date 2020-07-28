@@ -14,7 +14,13 @@ const IMG_EIGHT_TILE = ASSET_PATH + "eight_tile.png"
 const IMG_MINE_HIT_TILE = ASSET_PATH + "mine_red_tile.png"
 const IMG_MINE_TILE = ASSET_PATH + "mine_tile.png"
 const IMG_FLAG_TILE = ASSET_PATH + "flag_tile.png"
+const IMG_WRONG_TILE = ASSET_PATH + "wrong_tile.png"
 
+const TILE_EMPTY = "."
+const TILE_MINE = "*"
+const TILE_FLAG = "?"
+const TILE_WRONG = "X"
+const TILE_HIDDEN = "#"
 
 document.addEventListener('contextmenu', e => e.preventDefault())
 var canvas = document.getElementById('minesweeper_canvas')
@@ -40,10 +46,10 @@ function render_game_map(ctx, game_context) {
       var gc = game_context.game_map[tile_id.toString()]
       
       switch(gc) {
-        case "#":
+        case TILE_HIDDEN:
           img = IMG_UNKNOWN_TILE
           break
-        case ".":
+        case TILE_EMPTY:
           img = IMG_EMPTY_TILE
           break
         case "1":
@@ -70,15 +76,18 @@ function render_game_map(ctx, game_context) {
         case "8":
           img = IMG_EIGHT_TILE
           break
-        case "*":
+        case TILE_MINE:
           if (winning_condition) {
             img = IMG_MINE_TILE
           } else {
             img = IMG_MINE_HIT_TILE
           }
           break
-        case "?":
+        case TILE_FLAG:
           img = IMG_FLAG_TILE
+          break
+        case TILE_WRONG:
+          img = IMG_WRONG_TILE
           break
         }
       render_image(img, x * SQUARE_SIZE, y * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
