@@ -98,7 +98,10 @@ async def event_loop(websocket, path):
                 print("Game Over!")
                 game_context.reveal = True
                 game_over = True
+                #game_context.uncover_tile(coord)
+                game_context.visible.add(coord)
                 game_context.render_gameboard()
+                print_game_context(game_context)
                 continue
 
             # check winning condition

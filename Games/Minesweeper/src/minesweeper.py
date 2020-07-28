@@ -22,6 +22,7 @@ TILE_MINE = "*"
 TILE_FLAG = "?"
 TILE_WRONG = "X"
 TILE_HIDDEN = "#"
+TILE_MINE_HIT = "!"
 
 
 class GameContext():
@@ -111,7 +112,9 @@ class GameContext():
                         tile = str(mine_count)
 
                 if self.reveal:
-                    if (x, y) in self.mines:
+                    if (x, y) in self.mines and (x, y) in self.visible:
+                        tile = TILE_MINE_HIT
+                    elif (x, y) in self.mines:
                         tile = TILE_MINE
                     elif (x, y) in self.flags and (x, y) not in self.mines:
                         tile = TILE_WRONG

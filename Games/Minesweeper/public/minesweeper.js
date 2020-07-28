@@ -21,6 +21,7 @@ const TILE_MINE = "*"
 const TILE_FLAG = "?"
 const TILE_WRONG = "X"
 const TILE_HIDDEN = "#"
+const TILE_MINE_HIT = "!"
 
 document.addEventListener('contextmenu', e => e.preventDefault())
 var canvas = document.getElementById('minesweeper_canvas')
@@ -77,11 +78,10 @@ function render_game_map(ctx, game_context) {
           img = IMG_EIGHT_TILE
           break
         case TILE_MINE:
-          if (winning_condition) {
-            img = IMG_MINE_TILE
-          } else {
-            img = IMG_MINE_HIT_TILE
-          }
+          img = IMG_MINE_TILE
+          break
+        case TILE_MINE_HIT:
+          img = IMG_MINE_HIT_TILE
           break
         case TILE_FLAG:
           img = IMG_FLAG_TILE
