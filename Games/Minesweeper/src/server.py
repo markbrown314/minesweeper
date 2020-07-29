@@ -1,3 +1,4 @@
+""" Minesweeper WebSocket Server """
 import re
 from string import ascii_uppercase
 from copy import deepcopy

@@ -1,3 +1,4 @@
+/* Minesweeper WebSocket Client */
 const SQUARE_SIZE = 25
 
 const ASSET_PATH = "assets/"
