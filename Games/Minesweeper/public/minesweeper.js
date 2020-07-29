@@ -28,6 +28,7 @@ document.addEventListener('contextmenu', e => e.preventDefault())
 var canvas = document.getElementById('minesweeper_canvas')
 var reset_button = document.getElementById('reset_button')
 var undo_button = document.getElementById('undo_button')
+var mine_count_label = document.getElementById('mine_count')
 const ctx = canvas.getContext('2d')
 var game_context = null
 
@@ -139,4 +140,5 @@ socket.addEventListener('message', function (event) {
       canvas.width = game_context.max_x * SQUARE_SIZE
       canvas.height = game_context.max_y * SQUARE_SIZE
     }
+    mine_count_label.textContent = game_context["mines"] - game_context["flags"]
   })
