@@ -40,14 +40,15 @@ def print_game_context(game_context):
     print()
 
 def jsonify_game_context(game_context):
+    """ convert game context to a JSON compatible data structure """
     gc_dict = {}
     game_map_int = {}
     gc_dict["max_x"] = game_context.max_x
     gc_dict["max_y"] = game_context.max_y
     # cannot use map tuple keys in JSON
     # convert tuple key to integer based key
-    for (x,y) in game_context.game_map:
-        game_map_int[game_context.max_x * x + y] = game_context.game_map[(x,y)] 
+    for (x, y) in game_context.game_map:
+        game_map_int[game_context.max_x * x + y] = game_context.game_map[(x, y)]
 
     gc_dict["game_map"] = game_map_int
     gc_dict["winning_condition"] = game_context.winning_condition()
@@ -56,6 +57,8 @@ def jsonify_game_context(game_context):
 
 async def event_loop(websocket, path):
     """ event loop """
+
+    print("websocket path:", path)
     game_context = GameContext()
     undo_list = []
     game_over = False
@@ -68,20 +71,17 @@ async def event_loop(websocket, path):
 
         game_context_json = jsonify_game_context(game_context)
 
-        print ("Send...")
+        print("Send...")
         await websocket.send(game_context_json)
-        print ("Wait...")
+        print("Wait...")
         recv = await websocket.recv()
-        print ("Recv...", recv)
+        print("Recv...", recv)
         await asyncio.sleep(.25)
 
         command = recv
 
         if command == "":
             continue
-
-        if command in ("q", "quit"):
-            return
 
         if command[0] == "!" and not game_over:
             try:
@@ -140,7 +140,7 @@ async def event_loop(websocket, path):
             game_context.max_y = coord[1]
             game_over = False
 
-        if command in ("u"):
+        if command[0] == "u":
             if undo_list:
                 game_over = False
                 game_context = undo_list.pop()
