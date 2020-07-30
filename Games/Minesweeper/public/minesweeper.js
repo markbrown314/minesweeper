@@ -24,6 +24,25 @@ const TILE_WRONG = "X"
 const TILE_HIDDEN = "#"
 const TILE_MINE_HIT = "!"
 
+function time_format(input) {
+  if (input < 10) {
+    return "0" + input
+  }
+  else return input
+}
+function game_timer() {
+  if (!game_running) {
+    return
+  }
+  var game_cur_time = Date.now()
+  var time_diff = game_cur_time - game_base_time
+  var total_seconds = Math.floor(time_diff/1000)
+  var seconds = total_seconds % 60
+  var minutes = Math.floor(total_seconds/60) % 60
+  var hours = Math.floor(total_seconds/3600) % 60
+  game_time_label.textContent = time_format(hours) + ":" + time_format(minutes) + ":" + time_format(seconds)
+}
+
 document.addEventListener('contextmenu', e => e.preventDefault())
 var canvas = document.getElementById('minesweeper_canvas')
 var reset_button = document.getElementById('reset_button')
@@ -31,6 +50,10 @@ var undo_button = document.getElementById('undo_button')
 var mine_count_label = document.getElementById('mine_count')
 const ctx = canvas.getContext('2d')
 var game_context = null
+var game_running = false
+var game_time_label = document.getElementById('game_time')
+var game_base_time = Date.now()
+window.setInterval(game_timer, 1000)
 
 function tile_index(coord) {
   return Math.floor(coord/SQUARE_SIZE)
@@ -129,6 +152,7 @@ canvas.addEventListener('mousedown', e=> {
     if (e.button == 2) {
       socket.send("? (" + x + "," + y +")")
     }
+    game_running = true
   })
 
 const socket = new WebSocket('ws://localhost:8081 ')
@@ -140,5 +164,7 @@ socket.addEventListener('message', function (event) {
       canvas.width = game_context.max_x * SQUARE_SIZE
       canvas.height = game_context.max_y * SQUARE_SIZE
     }
-    mine_count_label.textContent = game_context["mines"] - game_context["flags"]
+    if (game_running) {
+      mine_count_label.textContent = game_context["mines"] - game_context["flags"]
+    }
   })
