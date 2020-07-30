@@ -112,19 +112,34 @@ class GameContext():
                         tile = str(mine_count)
 
                 if self.reveal:
-                    if (x, y) in self.mines and (x, y) in self.visible:
-                        tile = TILE_MINE_HIT
-                    elif (x, y) in self.mines:
+                    if (x, y) in self.mines:
                         tile = TILE_MINE
                     elif (x, y) in self.flags and (x, y) not in self.mines:
                         tile = TILE_WRONG
+
+                if (x, y) in self.mines and (x, y) in self.visible:
+                    tile = TILE_MINE_HIT
 
                 assert tile
                 self.game_map[(x, y)] = tile
 
     def winning_condition(self):
         """ check for winning condition """
-        return bool(self.mines and not self.visible ^ self.empty - self.mines)
+
+        # game has not started yet
+        if not self.mines:
+            return False
+
+        # check if flags
+        if self.mines != self.flags:
+            return False
+
+        # check that all tiles except mines are uncovered
+        if not self.visible ^ self.empty - self.mines:
+            return True
+
+        # return false if not in winning condition 
+        return False
 
     def hit_mine(self, coord):
         """ check if coordinate has mine """

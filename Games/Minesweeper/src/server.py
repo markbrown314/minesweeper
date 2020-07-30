@@ -55,7 +55,7 @@ def jsonify_game_context(game_context):
     gc_dict["winning_condition"] = game_context.winning_condition()
     gc_dict["mines"] = len(game_context.mines)
     gc_dict["flags"] = len(game_context.flags)
-
+    
     return json.dumps(gc_dict)
 
 async def event_loop(websocket, path):
@@ -99,9 +99,7 @@ async def event_loop(websocket, path):
 
             if game_context.hit_mine(coord):
                 print("Game Over!")
-                game_context.reveal = True
                 game_over = True
-                #game_context.uncover_tile(coord)
                 game_context.visible.add(coord)
                 game_context.render_gameboard()
                 print_game_context(game_context)
