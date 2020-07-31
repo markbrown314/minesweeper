@@ -84,6 +84,8 @@ function reset_game() {
 
 }
 
+/* keep track of old game map */
+var old_game_map = null
 function render_game_map(ctx, game_context) {
   var img = IMG_UNKNOWN_TILE
   var winning_condition = game_context["winning_condition"]
@@ -91,7 +93,12 @@ function render_game_map(ctx, game_context) {
     for (x = 0; x < game_context.max_x; x += 1) {
       var tile_id = ((x + 1) * game_context.max_x) + y + 1
       var gc = game_context.game_map[tile_id.toString()]
-      
+      if (old_game_map) {
+        /* only draw changes */
+        if (old_game_map[tile_id.toString()] == game_context.game_map[tile_id.toString()]) {
+          continue
+        }
+      }
       switch(gc) {
         case TILE_HIDDEN:
           img = IMG_UNKNOWN_TILE
@@ -144,6 +151,8 @@ function render_game_map(ctx, game_context) {
     undo_button.disabled = true
     render_image("assets/winning_image.png", 50, 50, 150, 131)
   }
+
+  old_game_map = {...game_context.game_map}
 }
 function render_image(image_src, x, y, size_x, size_y) {
   var img = new Image
@@ -159,6 +168,7 @@ reset_button.onclick = function() {
   mine_count = mines.value
 
   game_running = false
+  old_game_map = null
   reset_game()
   undo_button.disabled = true
   socket.send("s (" + x + "," + y + "," + mine_count + ")")
@@ -181,6 +191,7 @@ canvas.addEventListener('mousedown', e=> {
     if (e.button == 2) {
       socket.send("? (" + x + "," + y +")")
     }
+    
     if (game_running == false) {
       reset_game()
       game_running = true
