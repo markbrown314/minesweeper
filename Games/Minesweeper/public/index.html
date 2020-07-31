@@ -6,23 +6,39 @@
     <title>Minesweeper</title>
   </head>
   <body>
+    <div id="config_window" class="config_window">
+      <div class="config_window_content">  
+        <label id="close_button" class="close_button">&times;</label>
+        <p style="text-align: center;"><b>&#x1F4A3; Minesweeper Game Configuration</b></p>
+        <label><b>rows </b></label>
+        <input type="number" id="max_x" min="10" max="100" value="10" size="1" name="max_x">
+        <label><b>columns </b></label>
+        <input type="number" id="max_y" min="10" max="100" value="10" size="1" name="max_y">
+        <label><b> # mines </b></label>
+        <input type="number" id="mines" min="1" max="100" value="10" size="1" name="mines">
+
+        <p><b>Difficulty Level</b></p>
+        <input type="radio" id="beginner" name="difficulty_radio" value="0">
+        <label for="beginner">Beginner</label><br>
+        <input type="radio" id="moderate" name="difficulty_radio" value="1">
+        <label for="moderate">Moderate</label><br>  
+        <input type="radio" id="expert" name="difficulty_radio" value="2">
+        <label for="expert">Expert</label><br><br>
+      </div>
+    </div>
     <table>
       <tr>
         <td>
+          <b>Minesweeper</b>
+          <button type="button" id="config_button">Config</button>
           <button type="button" id="reset_button">Reset</button>
-          <button type="button" id="undo_button">Undo</button>
-          <label><b>Mine Count:</b></label>
-          <b><label id="mine_count">-</label></b> |
-          <b><label id="game_time" style="color:red;">00:00:00</label></b>
+          <button type="button" id="undo_button" disabled>Undo</button>
           <br>
-          <!--
-          <label>x:</label>
-          <input type="number" id="max_x" min="10" max="100" value="10" size="1" name="max_x">
-          <label>y:</label>
-          <input type="number" id="max_y" min="10" max="100" value="10" size="1" name="max_y">
-          <label>mines:</label>
-          <input type="number" id="mines" min="1" max="100" value="10" size="1" name="mines">
-          -->
+          <label><b>Mine Count:</b></label>
+          <b><label id="mine_count"></label></b> |
+          <b><label> Timer: </label></b>
+          <b><label id="game_time" style="color:red;">-</label></b>
+          <br>
         </td>
       </tr>
       <tr>

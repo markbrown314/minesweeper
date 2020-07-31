@@ -1,44 +1,22 @@
 """ Minesweeper WebSocket Server """
 import re
-from string import ascii_uppercase
 from copy import deepcopy
 import json
 import asyncio
 import websockets
 from minesweeper import GameContext
 
-LABEL = " " + ascii_uppercase
-
-def parse_coord(input_str):
+def parse_tuple(input_str):
     """ parse coordinate string input """
-    coord_temp = input_str
-    coord_temp = coord_temp.replace("(", "")
-    coord_temp = coord_temp.replace(")", "")
-    coord_temp = coord_temp.split(",")
-    if len(coord_temp) != 2:
-        raise ValueError("invalid coordinates")
-    coord = []
-    for pos in coord_temp:
-        # convert alphabetic coordinate to numerical coordinate
-        # assuming ascii input
-        if pos.isalpha():
-            coord.append(ord(pos.upper()) - ord('A') + 1)
-        else:
-            coord.append(int(pos))
+    tuple_temp = input_str
+    tuple_temp = tuple_temp.replace("(", "")
+    tuple_temp = tuple_temp.replace(")", "")
+    tuple_temp = tuple_temp.split(",")
+    if len(tuple_temp) < 1:
+        raise ValueError("invalid tuple")
 
-    return tuple(coord)
+    return tuple([int(value) for value in tuple_temp])
 
-def print_game_context(game_context):
-    """ print game state to terminal """
-    game_context.render_gameboard()
-    for x in range(0, game_context.max_x + 1):
-        print(LABEL[x], end='')
-    for y in range(1, game_context.max_y + 1):
-        print()
-        print(LABEL[y], end='')
-        for x in range(1, game_context.max_x + 1):
-            print(game_context.game_map[(x, y)], end="")
-    print()
 
 def jsonify_game_context(game_context):
     """ convert game context to a JSON compatible data structure """
@@ -70,7 +48,7 @@ async def event_loop(websocket, path):
         save_context = deepcopy(game_context)
 
         if not game_over:
-            print_game_context(game_context)
+            game_context.render_gameboard()
 
         game_context_json = jsonify_game_context(game_context)
 
@@ -89,7 +67,7 @@ async def event_loop(websocket, path):
         if command[0] == "!" and not game_over:
             try:
                 coord_str = re.split(' |,', command, 1)[1]
-                coord = parse_coord(coord_str)
+                coord = parse_tuple(coord_str)
             except ValueError:
                 print("invalid input")
                 continue
@@ -102,7 +80,6 @@ async def event_loop(websocket, path):
                 game_over = True
                 game_context.visible.add(coord)
                 game_context.render_gameboard()
-                print_game_context(game_context)
                 continue
 
             # check winning condition
@@ -116,7 +93,7 @@ async def event_loop(websocket, path):
         if command[0] == "?" and not game_over:
             try:
                 coord_str = re.split(' |,', command, 1)[1]
-                coord = {parse_coord(coord_str)}
+                coord = {parse_tuple(coord_str)}
                 undo_list.append(save_context)
                 game_context.set_flag(coord)
             except ValueError:
@@ -132,13 +109,14 @@ async def event_loop(websocket, path):
             undo_list = []
             game_context = GameContext()
             try:
-                coord_str = re.split(' |,', command, 1)[1]
-                coord = parse_coord(coord_str)
+                tuple_str = re.split(' |,', command, 1)[1]
+                restart_tuple = parse_tuple(tuple_str)
             except ValueError:
                 print("invalid input")
                 continue
-            game_context.max_x = coord[0]
-            game_context.max_y = coord[1]
+            game_context.max_x = restart_tuple[0]
+            game_context.max_y = restart_tuple[1]
+            game_context.max_mines = restart_tuple[2]
             game_over = False
 
         if command[0] == "u":
