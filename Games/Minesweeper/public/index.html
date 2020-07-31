@@ -26,25 +26,27 @@
         <label for="expert">Expert</label><br><br>
       </div>
     </div>
-    <table>
-      <tr>
-        <td>
-          <b>Minesweeper</b>
-          <button type="button" id="config_button">Config</button>
-          <button type="button" id="reset_button">Reset</button>
-          <button type="button" id="undo_button" disabled>Undo</button>
-          <br>
-          <label><b>Mine Count:</b></label>
-          <b><label id="mine_count"></label></b> |
-          <b><label> Timer: </label></b>
-          <b><label id="game_time" style="color:red;">-</label></b>
-          <br>
-        </td>
-      </tr>
-      <tr>
-      <td><canvas id="minesweeper_canvas"> </canvas></td>
-      </tr>
-    </table>
+    <div class="main_screen">
+      <table>
+        <tr>
+          <td>
+            <b>Minesweeper</b>
+            <button type="button" id="config_button">Config</button>
+            <button type="button" id="reset_button">Reset</button>
+            <button type="button" id="undo_button" disabled>Undo</button>
+            <br>
+            <label><b>Mine Count:</b></label>
+            <b><label id="mine_count"></label></b> |
+            <b><label> Timer: </label></b>
+            <b><label id="game_time" style="color:red;">-</label></b>
+            <br>
+          </td>
+        </tr>
+        <tr>
+        <td><canvas id="minesweeper_canvas"> </canvas></td>
+        </tr>
+      </table>
+    </div>
     <script src="minesweeper.js"></script> 
   </body>
 </html>
