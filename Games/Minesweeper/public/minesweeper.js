@@ -150,6 +150,7 @@ function render_game_map(ctx, game_context) {
     game_running = false
     undo_button.disabled = true
     render_image("assets/winning_image.png", 50, 50, 150, 131)
+    mine_count_label.textContent = "0"
   }
 
   old_game_map = {...game_context.game_map}
