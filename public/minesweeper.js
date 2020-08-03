@@ -192,7 +192,7 @@ canvas.addEventListener('mousedown', e=> {
     if (e.button == 2) {
       socket.send("? (" + x + "," + y +")")
     }
-    
+
     if (game_running == false) {
       reset_game()
       game_running = true
@@ -249,3 +249,13 @@ socket.addEventListener('message', function (event) {
       mine_count_label.textContent = game_context["mines"] - game_context["flags"]
     }
   })
+
+socket.addEventListener('error', function (event) {
+    console.log('WebSocket error: ', event);
+  alert('Connection Failed')
+  });
+
+socket.onclose = function(event) {
+  console.log('WebSocket error: ', event);
+  alert('Connection to Server Closed')
+};

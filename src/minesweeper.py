@@ -76,7 +76,9 @@ class GameContext():
         self.flags ^= coord
 
 
-    def uncover_tile(self, coord):
+    def uncover_tile(self, coord, depth = 0):
+        depth += 1
+
         """ reveal tile at coordinate """
         if coord in self.visible:
             return
@@ -84,6 +86,8 @@ class GameContext():
         # first move init board
         if not self.visible:
             self.layout_callback(coord)
+
+        print("uncovering position", coord, "at depth", depth)
 
         if self.adjecent_mines(coord) > 0:
             self.visible.add(coord)
@@ -93,7 +97,7 @@ class GameContext():
             self.visible.add(coord)
 
         for pos in self.adjecency_check(self.empty, coord):
-            self.uncover_tile(pos)
+            self.uncover_tile(pos, depth)
 
     def render_gameboard(self):
         """ construct game map from current game context """
