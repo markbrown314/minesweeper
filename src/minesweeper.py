@@ -75,29 +75,35 @@ class GameContext():
         """ set flag at coordinate """
         self.flags ^= coord
 
-
-    def uncover_tile(self, coord, depth = 0):
-        depth += 1
-
+    def uncover_tile(self, input_coord):
         """ reveal tile at coordinate """
-        if coord in self.visible:
-            return
+        coord_array = [input_coord]
 
-        # first move init board
-        if not self.visible:
-            self.layout_callback(coord)
+        while True:
+            if not coord_array:
+                break
 
-        print("uncovering position", coord, "at depth", depth)
+            coord = coord_array.pop()
+            
+            if coord in self.visible:
+                continue
 
-        if self.adjecent_mines(coord) > 0:
-            self.visible.add(coord)
-            return
+            # first move init board
+            if not self.visible:
+                self.layout_callback(coord)
 
-        if coord in self.empty:
-            self.visible.add(coord)
+            #print("uncovering position", coord)
 
-        for pos in self.adjecency_check(self.empty, coord):
-            self.uncover_tile(pos, depth)
+            if self.adjecent_mines(coord) > 0:
+                self.visible.add(coord)
+                continue
+
+            if coord in self.empty:
+                self.visible.add(coord)
+
+            for pos in self.adjecency_check(self.empty, coord):
+                coord_array.append(pos)
+                
 
     def render_gameboard(self):
         """ construct game map from current game context """
@@ -145,8 +151,11 @@ class GameContext():
         # return false if not in winning condition 
         return False
 
-    def hit_mine(self, coord):
+    def loosing_condition(self):
         """ check if coordinate has mine """
+        return bool(self.visible & self.mines)
+
+    def hit_mine(self, coord):
         return bool(coord in self.mines)
 
     def default_mine_placement(self, initial_coord=None):

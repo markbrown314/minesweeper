@@ -5,6 +5,7 @@ import json
 import asyncio
 import websockets
 from minesweeper import GameContext
+from time import time
 
 def parse_tuple(input_str):
     """ parse coordinate string input """
@@ -31,6 +32,7 @@ def jsonify_game_context(game_context):
 
     gc_dict["game_map"] = game_map_int
     gc_dict["winning_condition"] = game_context.winning_condition()
+    gc_dict["loosing_condition"] = game_context.loosing_condition()
     gc_dict["mines"] = len(game_context.mines)
     gc_dict["flags"] = len(game_context.flags)
     
@@ -52,8 +54,12 @@ async def event_loop(websocket, path):
 
         game_context_json = jsonify_game_context(game_context)
 
+        t1 = time()
         print("Send...")
         await websocket.send(game_context_json)
+        t2 = time()
+        print("delta time:", t2 - t1)
+
         print("Wait...")
         recv = await websocket.recv()
         print("Recv...", recv)
@@ -73,7 +79,11 @@ async def event_loop(websocket, path):
                 continue
 
             undo_list.append(save_context)
+            t1 = time()
             game_context.uncover_tile(coord)
+            t2 = time()
+
+            print("delta time:", t2 - t1)
 
             if game_context.hit_mine(coord):
                 print("Game Over!")

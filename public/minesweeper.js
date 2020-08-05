@@ -89,6 +89,7 @@ var old_game_map = null
 function render_game_map(ctx, game_context) {
   var img = IMG_UNKNOWN_TILE
   var winning_condition = game_context["winning_condition"]
+  var loosing_condition = game_context["loosing_condition"]
   for (y = 0; y < game_context.max_y; y += 1) {
     for (x = 0; x < game_context.max_x; x += 1) {
       var tile_id = ((x + 1) * game_context.max_x) + y + 1
@@ -152,6 +153,14 @@ function render_game_map(ctx, game_context) {
     render_image("assets/winning_image.png", 50, 50, 150, 131)
     mine_count_label.textContent = "0"
   }
+
+  if (loosing_condition) {
+    game_running = false
+    undo_button.disabled = true
+    render_image("assets/loosing_image.png", 50, 50, 150, 131)
+    mine_count_label.textContent = "0"
+  }
+
 
   old_game_map = {...game_context.game_map}
 }
