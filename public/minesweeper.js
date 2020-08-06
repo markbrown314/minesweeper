@@ -16,6 +16,8 @@ const IMG_MINE_HIT_TILE = ASSET_PATH + "mine_red_tile.png"
 const IMG_MINE_TILE = ASSET_PATH + "mine_tile.png"
 const IMG_FLAG_TILE = ASSET_PATH + "flag_tile.png"
 const IMG_WRONG_TILE = ASSET_PATH + "wrong_tile.png"
+const IMG_WINNING_IMAGE = ASSET_PATH + "winning_image.png"
+const IMG_LOOSING_IMAGE = ASSET_PATH + "loosing_image.png"
 
 const TILE_EMPTY = "."
 const TILE_MINE = "*"
@@ -65,6 +67,7 @@ var max_x = document.getElementById('max_x')
 var max_y = document.getElementById('max_y')
 var mines = document.getElementById('mines')
 var difficulty_radio = document.getElementsByName('difficulty_radio')
+var image_cache = {}
 
 window.setInterval(game_timer, 1000)
 
@@ -86,7 +89,7 @@ function reset_game() {
 
 /* keep track of old game map */
 var old_game_map = null
-function render_game_map(ctx, game_context) {
+function render_game_map(timer) {
   var img = IMG_UNKNOWN_TILE
   var winning_condition = game_context["winning_condition"]
   var loosing_condition = game_context["loosing_condition"]
@@ -150,14 +153,14 @@ function render_game_map(ctx, game_context) {
   if (winning_condition) {
     game_running = false
     undo_button.disabled = true
-    render_image("assets/winning_image.png", 50, 50, 150, 131)
+    render_image(IMG_WINNING_IMAGE, 50, 50, 150, 131)
     mine_count_label.textContent = "0"
   }
 
   if (loosing_condition) {
     game_running = false
     undo_button.disabled = true
-    render_image("assets/loosing_image.png", 50, 50, 150, 131)
+    render_image(IMG_LOOSING_IMAGE, 50, 50, 150, 131)
     mine_count_label.textContent = "0"
   }
 
@@ -165,10 +168,20 @@ function render_game_map(ctx, game_context) {
   old_game_map = {...game_context.game_map}
 }
 function render_image(image_src, x, y, size_x, size_y) {
-  var img = new Image
-  img.src = image_src
-  img.onload = function() {
-    ctx.drawImage(img, x, y, size_x, size_y)
+  if (!(image_src in image_cache)) {
+    var img = new Image
+    img.src = image_src
+    img.onload = function() {
+      var canvas = document.createElement("canvas")
+      var img_ctx = canvas.getContext("2d")
+      img_ctx.drawImage(img, 0, 0, size_x, size_y)
+      image_cache[image_src] = img_ctx.getImageData(0, 0, size_x, size_y)
+
+      ctx.putImageData(image_cache[image_src], x, y)
+    }
+  }
+  else {
+    ctx.putImageData(image_cache[image_src], x, y)
   }
 }
 
@@ -248,7 +261,7 @@ for (i = 0; i < difficulty_radio.length; i++) {
 const socket = new WebSocket('ws://localhost:8081 ')
 socket.addEventListener('message', function (event) {
     game_context = JSON.parse(event.data)
-    render_game_map(ctx, game_context)
+    window.requestAnimationFrame(render_game_map)
     if (canvas.width != game_context.max_x * SQUARE_SIZE ||
        canvas.height != game_context.max_y * SQUARE_SIZE) {
       canvas.width = game_context.max_x * SQUARE_SIZE

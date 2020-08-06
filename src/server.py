@@ -6,6 +6,9 @@ import asyncio
 import websockets
 from minesweeper import GameContext
 from time import time
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+import threading
+import os
 
 def parse_tuple(input_str):
     """ parse coordinate string input """
@@ -135,9 +138,17 @@ async def event_loop(websocket, path):
                 game_context = undo_list.pop()
             else:
                 print("Cannot undo")
-
 # main
+
+def webserver():
+    os.chdir("public/")
+    print("Setting up Webserver...")
+    http_server = HTTPServer(('', 8000), SimpleHTTPRequestHandler)
+    http_server.serve_forever()
+
 if __name__ == '__main__':
+    # launch webserver
+    threading.Thread(target=webserver, daemon=True).start()
     print("Waiting for client connection...")
     server = websockets.serve(event_loop, 'localhost', 8081)
     asyncio.get_event_loop().run_until_complete(server)
