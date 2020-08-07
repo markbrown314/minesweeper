@@ -167,8 +167,8 @@ function render_game_map(timer) {
 
   old_game_map = {...game_context.game_map}
 }
-function render_image(image_src, x, y, size_x, size_y) {
-  if (!(image_src in image_cache)) {
+function render_image(image_src, x, y, size_x, size_y, render = true) {
+  if (!(image_src in image_cache) || !render) {
     var img = new Image
     img.src = image_src
     img.onload = function() {
@@ -176,8 +176,9 @@ function render_image(image_src, x, y, size_x, size_y) {
       var img_ctx = canvas.getContext("2d")
       img_ctx.drawImage(img, 0, 0, size_x, size_y)
       image_cache[image_src] = img_ctx.getImageData(0, 0, size_x, size_y)
-
-      ctx.putImageData(image_cache[image_src], x, y)
+      if (render) {
+        ctx.putImageData(image_cache[image_src], x, y)
+      }
     }
   }
   else {
@@ -257,6 +258,27 @@ for (i = 0; i < difficulty_radio.length; i++) {
     }
   })
 }
+
+const preload_image_list = 
+[ IMG_EMPTY_TILE,
+  IMG_ONE_TILE,
+  IMG_TWO_TILE,
+  IMG_THREE_TILE,
+  IMG_FOUR_TILE,
+  IMG_FIVE_TILE,
+  IMG_SIX_TILE,
+  IMG_SEVEN_TILE,
+  IMG_EIGHT_TILE,
+  IMG_MINE_HIT_TILE,
+  IMG_MINE_TILE,
+  IMG_FLAG_TILE,
+  IMG_WRONG_TILE,
+  IMG_UNKNOWN_TILE,
+]
+
+preload_image_list.forEach(function (item, index) {
+  render_image(item, 0, 0, SQUARE_SIZE, SQUARE_SIZE, false) 
+})
 
 const socket = new WebSocket('ws://localhost:8081 ')
 socket.addEventListener('message', function (event) {
