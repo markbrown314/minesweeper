@@ -40,6 +40,7 @@ function time_format(input) {
 function game_timer() {
   if (game_preload_delay) {
     canvas.setAttribute('style', 'display:block')
+    mine_count_label.textContent = "Click to Start"
     window.setInterval(game_timer, 1000)
     game_preload_delay = false
   }
@@ -88,7 +89,7 @@ function snap_to_grid(coord) {
 
 function reset_game() {
   game_time_label.textContent = "00:00:00"
-  mine_count_label.textContent = "?"
+  if (game_context) mine_count_label.textContent = game_context["mines"]
   game_base_time = Date.now()
   undo_button.disabled = false
 
@@ -243,6 +244,7 @@ canvas.addEventListener('mousedown', e=> {
 /* main */
 console.log("Minesweeper")
 reset_game()
+mine_count_label.textContent = "Loading..."
 undo_button.disabled = true
 
 for (i = 0; i < difficulty_radio.length; i++) {

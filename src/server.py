@@ -36,7 +36,10 @@ def jsonify_game_context(game_context):
     gc_dict["game_map"] = game_map_int
     gc_dict["winning_condition"] = game_context.winning_condition()
     gc_dict["loosing_condition"] = game_context.loosing_condition()
-    gc_dict["mines"] = len(game_context.mines)
+
+    gc_dict["mines"] = game_context.max_mines
+
+
     gc_dict["flags"] = len(game_context.flags)
     
     return json.dumps(gc_dict)
