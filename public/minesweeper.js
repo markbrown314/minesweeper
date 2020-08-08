@@ -38,6 +38,12 @@ function time_format(input) {
   else return input
 }
 function game_timer() {
+  if (game_preload_delay) {
+    canvas.setAttribute('style', 'display:block')
+    window.setInterval(game_timer, 1000)
+    game_preload_delay = false
+  }
+  
   if (!game_running) {
     return
   }
@@ -59,8 +65,11 @@ var mine_count_label = document.getElementById('mine_count')
 var config_window = document.getElementById('config_window')
 var close_button = document.getElementById('close_button')
 const ctx = canvas.getContext('2d')
+canvas.setAttribute('style', 'display:none')
 var game_context = null
 var game_running = false
+var game_preload_delay = true
+var force_repaint = false
 var game_time_label = document.getElementById('game_time')
 var game_base_time = null
 var max_x = document.getElementById('max_x')
@@ -68,8 +77,6 @@ var max_y = document.getElementById('max_y')
 var mines = document.getElementById('mines')
 var difficulty_radio = document.getElementsByName('difficulty_radio')
 var image_cache = {}
-
-window.setInterval(game_timer, 1000)
 
 function tile_index(coord) {
   return Math.floor(coord/SQUARE_SIZE)
@@ -96,14 +103,13 @@ function render_game_map(timer) {
   for (y = 0; y < game_context.max_y; y += 1) {
     for (x = 0; x < game_context.max_x; x += 1) {
       var tile_id = ((x + 1) * game_context.max_x) + y + 1
-      var gc = game_context.game_map[tile_id.toString()]
-      if (old_game_map) {
+      var tile = game_context.game_map[tile_id.toString()]
+      if (old_game_map && !force_repaint) {
         /* only draw changes */
-        if (old_game_map[tile_id.toString()] == game_context.game_map[tile_id.toString()]) {
-          continue
-        }
+        if (old_game_map[tile_id.toString()] == tile) continue
       }
-      switch(gc) {
+
+      switch(tile) {
         case TILE_HIDDEN:
           img = IMG_UNKNOWN_TILE
           break
@@ -150,18 +156,22 @@ function render_game_map(timer) {
       render_image(img, x * SQUARE_SIZE, y * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
     }  
   }
+
+  if (force_repaint) {
+    force_repaint=false
+  }
+
   if (winning_condition) {
     game_running = false
     undo_button.disabled = true
     render_image(IMG_WINNING_IMAGE, 50, 50, 150, 131)
-    mine_count_label.textContent = "0"
+    mine_count_label.textContent = "You Win!"
   }
 
   if (loosing_condition) {
     game_running = false
-    undo_button.disabled = true
     render_image(IMG_LOOSING_IMAGE, 50, 50, 150, 131)
-    mine_count_label.textContent = "0"
+    mine_count_label.textContent = "Game Over!"
   }
 
 
@@ -199,10 +209,9 @@ reset_button.onclick = function() {
 }
 
 undo_button.onclick = function() {
-  if (!game_running) {
-    return
-  }
   socket.send("u")
+  force_repaint = true
+  mine_count_label.textContent = game_context["mines"] - game_context["flags"]
 }
 
 
@@ -260,21 +269,11 @@ for (i = 0; i < difficulty_radio.length; i++) {
 }
 
 const preload_image_list = 
-[ IMG_EMPTY_TILE,
-  IMG_ONE_TILE,
-  IMG_TWO_TILE,
-  IMG_THREE_TILE,
-  IMG_FOUR_TILE,
-  IMG_FIVE_TILE,
-  IMG_SIX_TILE,
-  IMG_SEVEN_TILE,
-  IMG_EIGHT_TILE,
-  IMG_MINE_HIT_TILE,
-  IMG_MINE_TILE,
-  IMG_FLAG_TILE,
-  IMG_WRONG_TILE,
-  IMG_UNKNOWN_TILE,
+[ IMG_UNKNOWN_TILE,
+  IMG_EMPTY_TILE,
 ]
+
+window.setInterval(game_timer, 1000)
 
 preload_image_list.forEach(function (item, index) {
   render_image(item, 0, 0, SQUARE_SIZE, SQUARE_SIZE, false) 

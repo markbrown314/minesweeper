@@ -80,11 +80,9 @@ async def event_loop(websocket, path):
             except ValueError:
                 print("invalid input")
                 continue
-
-            undo_list.append(save_context)
-            t1 = time()
-            game_context.uncover_tile(coord)
-            t2 = time()
+            if not (coord in game_context.visible):
+                undo_list.append(save_context)
+                game_context.uncover_tile(coord)
 
             print("delta time:", t2 - t1)
 
