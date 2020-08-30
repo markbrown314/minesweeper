@@ -5,3 +5,5 @@ minesweeper_venv/
 package.json
 package-lock.json
 node_modules
+eslint.cmd
+.jshintrc
