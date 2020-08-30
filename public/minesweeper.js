@@ -48,43 +48,39 @@ function game_timer() {
   if (!game_running) {
     return
   }
-  var game_cur_time = Date.now()
-  var time_diff = game_cur_time - game_base_time
-  var total_seconds = Math.floor(time_diff/1000)
-  var seconds = total_seconds % 60
-  var minutes = Math.floor(total_seconds/60) % 60
-  var hours = Math.floor(total_seconds/3600) % 60
+  let game_cur_time = Date.now()
+  let time_diff = game_cur_time - game_base_time
+  let total_seconds = Math.floor(time_diff/1000)
+  let seconds = total_seconds % 60
+  let minutes = Math.floor(total_seconds/60) % 60
+  let hours = Math.floor(total_seconds/3600) % 60
   game_time_label.textContent = time_format(hours) + ":" + time_format(minutes) + ":" + time_format(seconds)
 }
 
 document.addEventListener('contextmenu', e => e.preventDefault())
-var canvas = document.getElementById('minesweeper_canvas')
-var reset_button = document.getElementById('reset_button')
-var undo_button = document.getElementById('undo_button')
-var config_button = document.getElementById('config_button')
-var mine_count_label = document.getElementById('mine_count')
-var config_window = document.getElementById('config_window')
-var close_button = document.getElementById('close_button')
+const canvas = document.getElementById('minesweeper_canvas')
+const reset_button = document.getElementById('reset_button')
+const undo_button = document.getElementById('undo_button')
+const config_button = document.getElementById('config_button')
+const mine_count_label = document.getElementById('mine_count')
+const config_window = document.getElementById('config_window')
+const close_button = document.getElementById('close_button')
 const ctx = canvas.getContext('2d')
 canvas.setAttribute('style', 'display:none')
-var game_context = null
-var game_running = false
-var game_preload_delay = true
-var force_repaint = false
-var game_time_label = document.getElementById('game_time')
-var game_base_time = null
-var max_x = document.getElementById('max_x')
-var max_y = document.getElementById('max_y')
-var mines = document.getElementById('mines')
-var difficulty_radio = document.getElementsByName('difficulty_radio')
-var image_cache = {}
+let game_context = null
+let game_running = false
+let game_preload_delay = true
+let force_repaint = false
+const game_time_label = document.getElementById('game_time')
+let game_base_time = null
+const max_x = document.getElementById('max_x')
+const max_y = document.getElementById('max_y')
+const mines = document.getElementById('mines')
+const difficulty_radio = document.getElementsByName('difficulty_radio')
+const image_cache = {}
 
 function tile_index(coord) {
   return Math.floor(coord/SQUARE_SIZE)
-}
-
-function snap_to_grid(coord) {
-  return Math.floor(coord/SQUARE_SIZE) * SQUARE_SIZE
 }
 
 function reset_game() {
@@ -96,15 +92,16 @@ function reset_game() {
 }
 
 /* keep track of old game map */
-var old_game_map = null
-function render_game_map(timer) {
-  var img = IMG_UNKNOWN_TILE
-  var winning_condition = game_context["winning_condition"]
-  var loosing_condition = game_context["loosing_condition"]
-  for (y = 0; y < game_context.max_y; y += 1) {
-    for (x = 0; x < game_context.max_x; x += 1) {
-      var tile_id = ((x + 1) * game_context.max_x) + y + 1
-      var tile = game_context.game_map[tile_id.toString()]
+let old_game_map = null
+
+function render_game_map() {
+  let img = IMG_UNKNOWN_TILE
+  const winning_condition = game_context["winning_condition"]
+  const loosing_condition = game_context["loosing_condition"]
+  for (let y = 0; y < game_context.max_y; y += 1) {
+    for (let x = 0; x < game_context.max_x; x += 1) {
+      const tile_id = ((x + 1) * game_context.max_x) + y + 1
+      const tile = game_context.game_map[tile_id.toString()]
       if (old_game_map && !force_repaint) {
         /* only draw changes */
         if (old_game_map[tile_id.toString()] == tile) continue
@@ -180,11 +177,11 @@ function render_game_map(timer) {
 }
 function render_image(image_src, x, y, size_x, size_y, render = true) {
   if (!(image_src in image_cache) || !render) {
-    var img = new Image
+    const img = new Image
     img.src = image_src
     img.onload = function() {
-      var canvas = document.createElement("canvas")
-      var img_ctx = canvas.getContext("2d")
+      const canvas = document.createElement("canvas")
+      const img_ctx = canvas.getContext("2d")
       img_ctx.drawImage(img, 0, 0, size_x, size_y)
       image_cache[image_src] = img_ctx.getImageData(0, 0, size_x, size_y)
       if (render) {
@@ -198,9 +195,9 @@ function render_image(image_src, x, y, size_x, size_y, render = true) {
 }
 
 reset_button.onclick = function() {
-  x = max_x.value
-  y = max_y.value
-  mine_count = mines.value
+  let x = max_x.value
+  let y = max_y.value
+  let mine_count = mines.value
 
   game_running = false
   old_game_map = null
@@ -217,8 +214,8 @@ undo_button.onclick = function() {
 
 
 canvas.addEventListener('mousedown', e=> {
-    x = tile_index(e.offsetX) + 1
-    y = tile_index(e.offsetY) + 1
+    let x = tile_index(e.offsetX) + 1
+    let y = tile_index(e.offsetY) + 1
     if (e.button == 0) {
       socket.send("! (" + x + "," + y +")")
     }
@@ -247,9 +244,9 @@ reset_game()
 mine_count_label.textContent = "Loading..."
 undo_button.disabled = true
 
-for (i = 0; i < difficulty_radio.length; i++) {
+for (let i = 0; i < difficulty_radio.length; i++) {
   difficulty_radio[i].addEventListener('click', function() {
-    radio = this
+    let radio = this
     switch(radio.value) {
       case DIFFICULTY_BEGINNER:
         max_x.value = 10
@@ -277,7 +274,7 @@ const preload_image_list =
 
 window.setInterval(game_timer, 1000)
 
-preload_image_list.forEach(function (item, index) {
+preload_image_list.forEach(function (item) {
   render_image(item, 0, 0, SQUARE_SIZE, SQUARE_SIZE, false) 
 })
 
