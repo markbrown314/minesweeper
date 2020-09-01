@@ -24,37 +24,61 @@ def parse_tuple(input_str):
 
 def jsonify_game_context(game_context):
     """ convert game context to a JSON compatible data structure """
-    gc_dict = {}
-    game_map_int = {}
-    gc_dict["max_x"] = game_context.max_x
-    gc_dict["max_y"] = game_context.max_y
-    # cannot use map tuple keys in JSON
-    # convert tuple key to integer based key
+    game_context_dict = {}
+    game_context_dict["rand_seed"] = game_context.rand_seed
+    game_context_dict["max_x"] = game_context.max_x
+    game_context_dict["max_y"] = game_context.max_y
+    game_context_dict["percent_mines"] = game_context.percent_mines
+    game_context_dict["max_mines"] = game_context.max_mines
+    game_context_dict["mines"] = list(game_context.mines)
+    game_context_dict["flags"] = list(game_context.flags)
+    game_context_dict["visible"] = list(game_context.visible)
+    game_context_dict["empty"] = list(game_context.empty)
+
+    game_context_dict["game_map"] = {}
+
     for (x, y) in game_context.game_map:
-        game_map_int[game_context.max_x * x + y] = game_context.game_map[(x, y)]
+        game_context_dict["game_map"][str(x) + "," + str(y)] = game_context.game_map[(x, y)]
 
-    gc_dict["game_map"] = game_map_int
-    gc_dict["winning_condition"] = game_context.winning_condition()
-    gc_dict["loosing_condition"] = game_context.loosing_condition()
+    game_context_dict["winning_condition"] = game_context.winning_condition()
+    game_context_dict["loosing_condition"] = game_context.loosing_condition()
 
-    gc_dict["mines"] = game_context.max_mines
+    return json.dumps(game_context_dict)
 
+def dejsonify_game_context(json_game_context):
+    """ convert game context to a JSON compatible data structure """
+    game_context = GameContext()
+    #print(json_game_context)
+    game_context_dict = json.loads(json_game_context)
 
-    gc_dict["flags"] = len(game_context.flags)
-    
-    return json.dumps(gc_dict)
+    game_context.rand_seed = game_context_dict["rand_seed"]
+    game_context.max_x = game_context_dict["max_x"]
+    game_context.max_y = game_context_dict["max_y"]
+    game_context.percent_mines = game_context_dict["percent_mines"]
+    game_context.max_mines = game_context_dict["max_mines"]
+    game_context.mines = { tuple(t) for t in game_context_dict["mines"] }
+    game_context.flags = { tuple(t) for t in game_context_dict["flags"] }
+    game_context.visible = { tuple(t) for t in game_context_dict["visible"] }
+    game_context.empty = { tuple(t) for t in game_context_dict["empty"] }
+
+    for c in game_context_dict["game_map"]:
+        j = c.split(",")
+        x = int(j[0])
+        y = int(j[1])
+        game_context.game_map[(x,y)] = game_context_dict["game_map"][c]
+
+    game_context.command = game_context_dict["command"]
+
+    return game_context
 
 async def event_loop(websocket, path):
     """ event loop """
 
     print("websocket path:", path)
     game_context = GameContext()
-    undo_list = []
     game_over = False
 
     while True:
-        save_context = deepcopy(game_context)
-
         if not game_over:
             game_context.render_gameboard()
 
@@ -71,7 +95,10 @@ async def event_loop(websocket, path):
         print("Recv...", recv)
         await asyncio.sleep(.25)
 
-        command = recv
+        game_context_json = recv
+        #print(game_context_json)
+        game_context = dejsonify_game_context(game_context_json)
+        command = game_context.command
 
         if command == "":
             continue
@@ -84,7 +111,6 @@ async def event_loop(websocket, path):
                 print("invalid input")
                 continue
             if not (coord in game_context.visible):
-                undo_list.append(save_context)
                 game_context.uncover_tile(coord)
 
             print("delta time:", t2 - t1)
@@ -108,19 +134,16 @@ async def event_loop(websocket, path):
             try:
                 coord_str = re.split(' |,', command, 1)[1]
                 coord = {parse_tuple(coord_str)}
-                undo_list.append(save_context)
                 game_context.set_flag(coord)
             except ValueError:
                 print("invalid input")
 
         if command[0] == "%":
             print(game_context.mines)
-            undo_list.append(save_context)
             game_context.reveal = not game_context.reveal
 
         if command[0] == "s":
             print("Restarting Game")
-            undo_list = []
             game_context = GameContext()
             try:
                 tuple_str = re.split(' |,', command, 1)[1]
@@ -134,10 +157,6 @@ async def event_loop(websocket, path):
             game_over = False
 
         if command[0] == "u":
-            if undo_list:
-                game_over = False
-                game_context = undo_list.pop()
-            else:
                 print("Cannot undo")
 # main
 

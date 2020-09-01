@@ -85,7 +85,7 @@ function tile_index(coord) {
 
 function reset_game() {
   game_time_label.textContent = "00:00:00";
-  if (game_context) mine_count_label.textContent = game_context.mines;
+  if (game_context) mine_count_label.textContent = game_context.mines.length;
   game_base_time = Date.now();
   undo_button.disabled = false;
 }
@@ -97,13 +97,13 @@ function render_game_map() {
   let img = IMG_UNKNOWN_TILE;
   const winning_condition = game_context.winning_condition;
   const loosing_condition = game_context.loosing_condition;
-  for (let y = 0; y < game_context.max_y; y += 1) {
-    for (let x = 0; x < game_context.max_x; x += 1) {
-      const tile_id = ((x + 1) * game_context.max_x) + y + 1;
-      const tile = game_context.game_map[tile_id.toString()];
+  for (let y = 1; y <= game_context.max_y; y += 1) {
+    for (let x = 1; x <= game_context.max_x; x += 1) {
+      const c = x.toString() + "," + y.toString()
+      const tile = game_context.game_map[c];
       if (old_game_map && !force_repaint) {
         /* only draw changes */
-        if (old_game_map[tile_id.toString()] == tile) continue;
+        if (old_game_map[c] == tile) continue;
       }
 
       switch(tile) {
@@ -150,12 +150,12 @@ function render_game_map() {
           img = IMG_WRONG_TILE;
           break;
         }
-      render_image(img, x * SQUARE_SIZE, y * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+      render_image(img, (x-1) * SQUARE_SIZE, (y-1) * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
     }  
   }
 
   if (force_repaint) {
-    force_repaint=false;
+    force_repaint = false;
   }
 
   if (winning_condition) {
@@ -202,25 +202,29 @@ reset_button.onclick = function() {
   old_game_map = null;
   reset_game();
   undo_button.disabled = true;
-  socket.send("s (" + x + "," + y + "," + mine_count + ")");
+  game_context.command = "s (" + x + "," + y + "," + mine_count + ")";
+  socket.send(JSON.stringify(game_context));
 };
 
 undo_button.onclick = function() {
-  socket.send("u");
+  game_context.command = "u";
+  socket.send(JSON.stringify(game_context));
   force_repaint = true;
-  mine_count_label.textContent = game_context.mines - game_context.flags;
+  mine_count_label.textContent = game_context.mines.length - game_context.flags.length;
 };
 
 
 canvas.addEventListener('mousedown', e=> {
     let x = tile_index(e.offsetX) + 1;
     let y = tile_index(e.offsetY) + 1;
+
     if (e.button == 0) {
-      socket.send("! (" + x + "," + y +")");
+      game_context.command = "! (" + x + "," + y +")";
     }
     if (e.button == 2) {
-      socket.send("? (" + x + "," + y +")");
+      game_context.command = "? (" + x + "," + y +")";
     }
+    socket.send(JSON.stringify(game_context));
 
     if (game_running == false) {
       reset_game();
@@ -280,6 +284,7 @@ preload_image_list.forEach(function (item) {
 const socket = new WebSocket('ws://localhost:8081 ');
 socket.addEventListener('message', function (event) {
     game_context = JSON.parse(event.data);
+
     window.requestAnimationFrame(render_game_map);
     if (canvas.width != game_context.max_x * SQUARE_SIZE ||
        canvas.height != game_context.max_y * SQUARE_SIZE) {
@@ -287,7 +292,7 @@ socket.addEventListener('message', function (event) {
       canvas.height = game_context.max_y * SQUARE_SIZE;
     }
     if (game_running) {
-      mine_count_label.textContent = game_context.mines - game_context.flags;
+      mine_count_label.textContent = game_context.mines.length - game_context.flags.length;
     }
   });
 
